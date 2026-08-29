@@ -1,0 +1,305 @@
+// This is your Prisma schema file for RentHubIndia
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
+enum ListingStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  RESOLVED
+}
+
+enum ReportCategory {
+  FRAUD
+  SPAM
+  ABUSE
+  FAKE_LISTING
+}
+
+enum ReportTargetType {
+  LISTING
+  USER
+  MESSAGE
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// ─────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────
+
+model User {
+  id                 String             @id @default(uuid())
+  name               String
+  email              String?            @unique
+  phone              String             @unique
+  passwordHash       String?            // null for Google OAuth users
+  googleId           String?            @unique
+  avatarUrl          String?
+  role               UserRole           @default(USER)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verificationDoc    String?            // URL to uploaded ID/Aadhaar
+  isBlocked          Boolean            @default(false)
+  country            String?            // auto-detected from IP
+  city               String?
+  currency           String?            // auto-set from country
+  fcmToken           String?            // for push notifications
+  rating             Decimal?           @db.Decimal(2, 1)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  listings           Listing[]
+  bookingsAsRenter   Booking[]          @relation("RenterBookings")
+  bookingsAsOwner    Booking[]          @relation("OwnerBookings")
+  reviewsGiven       Review[]           @relation("ReviewsGiven")
+  reviewsReceived    Review[]           @relation("ReviewsReceived")
+  reports            Report[]           @relation("ReporterReports")
+  reportsAgainst     Report[]           @relation("ReportedUserReports")
+  notifications      Notification[]
+  supportTickets     SupportTicket[]
+  otps               OTP[]
+  chatsAsRenter      Chat[]             @relation("RenterChats")
+  chatsAsOwner       Chat[]             @relation("OwnerChats")
+  sentMessages       Message[]          @relation("SentMessages")
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String
+  icon     String
+  slug     String    @unique
+  listings Listing[]
+}
+
+model Listing {
+  id            String        @id @default(uuid())
+  userId        String
+  categoryId    String
+  title         String
+  description   String
+  pricePerDay   Decimal       @db.Decimal(10, 2)
+  location      String
+  latitude      Decimal?      @db.Decimal(9, 6)
+  longitude     Decimal?      @db.Decimal(9, 6)
+  country       String?
+  city          String?
+  status        ListingStatus @default(ACTIVE)
+  isApproved    Boolean       @default(false) // admin must approve
+  availableFrom DateTime?
+  availableTo   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  rating        Decimal?      @db.Decimal(2, 1)
+  reviewCount   Int           @default(0)
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category      @relation(fields: [categoryId], references: [id])
+  images        ListingImage[]
+  bookings      Booking[]
+  reviews       Review[]
+  reports       Report[]      @relation("ListingReports")
+  chats         Chat[]
+}
+
+model ListingImage {
+  id        String  @id @default(uuid())
+  listingId String
+  imageUrl  String
+  sortOrder Int     @default(0)
+
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  listingId  String
+  renterId   String
+  ownerId    String
+  startDate  DateTime
+  endDate    DateTime
+  totalPrice Decimal       @db.Decimal(10, 2)
+  status     BookingStatus @default(PENDING)
+  notes      String?       @db.Text
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  listing    Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  renter     User          @relation("RenterBookings", fields: [renterId], references: [id], onDelete: Cascade)
+  owner      User          @relation("OwnerBookings", fields: [ownerId], references: [id], onDelete: Cascade)
+  review     Review?
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  bookingId  String   @unique
+  listingId  String
+  reviewerId String
+  revieweeId String
+  rating     Int      // 1–5
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee   User     @relation("ReviewsReceived", fields: [revieweeId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id              String           @id @default(uuid())
+  reporterId      String
+  targetType      ReportTargetType
+  targetListingId String?
+  targetUserId    String?
+  category        ReportCategory
+  description     String?
+  status          ReportStatus     @default(OPEN)
+  adminNote       String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  reporter        User             @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetListing   Listing?         @relation("ListingReports", fields: [targetListingId], references: [id], onDelete: Cascade)
+  targetUser      User?            @relation("ReportedUserReports", fields: [targetUserId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  body      String
+  type      String   // booking_update | new_message | payment | system
+  isRead    Boolean  @default(false)
+  data      Json?    // extra metadata (bookingId, listingId, etc.)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model SupportTicket {
+  id         String       @id @default(uuid())
+  userId     String
+  subject    String
+  message    String
+  status     TicketStatus @default(OPEN)
+  adminReply String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id        String    @id @default(uuid())
+  listingId String
+  renterId  String
+  ownerId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedBy String[]  @default([]) // Added for Feature 6
+
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  renter    User      @relation("RenterChats", fields: [renterId], references: [id], onDelete: Cascade)
+  owner     User      @relation("OwnerChats", fields: [ownerId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([renterId])
+  @@index([ownerId])
+  @@index([updatedAt])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  text      String?
+  imageUrl  String?
+  read            Boolean  @default(false)
+  deletedForAll   Boolean  @default(false)
+  deletedForSelf  String[] @default([])
+  createdAt       DateTime @default(now())
+  replyToId       String?
+  replyTo         Message? @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies         Message[] @relation("MessageReplies")
+  editedAt        DateTime?
+  reactions       Json     @default("{}")
+  isFlagged       Boolean  @default(false)
+  flagReason      String?
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@index([chatId, createdAt])
+}
+
+model Broadcast {
+  id             String    @id @default(uuid())
+  title          String
+  body           String
+  targetAudience String    // ALL | VERIFIED | UNVERIFIED | OWNERS | RENTERS
+  status         String    @default("DRAFT") // DRAFT | SENT | SCHEDULED
+  scheduledAt    DateTime?
+  sentCount      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model ServiceableCity {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

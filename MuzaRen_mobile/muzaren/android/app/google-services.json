@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "8446829536",
+    "project_id": "renthubindia-7ae83",
+    "storage_bucket": "renthubindia-7ae83.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:8446829536:android:656bac65705635c9fd0185",
+        "android_client_info": {
+          "package_name": "com.muzafar.renthubindia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcKVW3VTzNh-f8EHieMTYjhwHnSnPpsBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:8446829536:android:0a6aca5e8253aa01fd0185",
+        "android_client_info": {
+          "package_name": "com.renthubindia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcKVW3VTzNh-f8EHieMTYjhwHnSnPpsBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
