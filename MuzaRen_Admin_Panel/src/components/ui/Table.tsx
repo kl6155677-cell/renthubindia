@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const Table = ({ children, className = '' }: any) => <table className={`table ${className}`}>{children}</table>;
 export const Thead = ({ children, className = '' }: any) => <thead className={className}>{children}</thead>;
 export const Tbody = ({ children, className = '' }: any) => <tbody className={className}>{children}</tbody>;
