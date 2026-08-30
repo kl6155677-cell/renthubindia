@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
-import api from '../services/api'
+import { api } from '../services/api'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/Table'
@@ -198,22 +198,22 @@ export function CitiesPage() {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>City Name</label>
-                <Input required value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Mumbai" />
+                <Input required value={name} onChange={(e: any) => setName(e.target.value)} placeholder="e.g. Mumbai" />
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>State (Optional)</label>
-                <Input value={stateName} onChange={e => setStateName(e.target.value)} placeholder="e.g. Maharashtra" />
+                <Input value={stateName} onChange={(e: any) => setStateName(e.target.value)} placeholder="e.g. Maharashtra" />
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>Country</label>
-                <Input required value={country} onChange={e => setCountry(e.target.value)} placeholder="e.g. India" />
+                <Input required value={country} onChange={(e: any) => setCountry(e.target.value)} placeholder="e.g. India" />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input 
                   type="checkbox" 
                   id="isActive" 
                   checked={isActive} 
-                  onChange={e => setIsActive(e.target.checked)} 
+                  onChange={(e: any) => setIsActive(e.target.checked)} 
                 />
                 <label htmlFor="isActive">Serviceable (Active)</label>
               </div>
