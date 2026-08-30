@@ -384,7 +384,6 @@ const getAnalytics = async (range = '30d') => {
       { city: 'Rabat', country: 'Morocco', listingCount: 800 },
       { city: 'Marrakech', country: 'Morocco', listingCount: 500 }
     ]
-    ]
   };
 };
 
