@@ -33,3 +33,6 @@ Thumbs.db
 
 # Serverless/Vercel
 .vercel/
+
+.vercel
+.env*
